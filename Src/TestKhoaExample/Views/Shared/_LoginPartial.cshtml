@@ -1,0 +1,22 @@
+﻿@using Microsoft.Extensions.DependencyInjection;
+@inject TestKhoaExample.IRepository.IAccountRepository _account
+
+<ul class="navbar-nav">
+    @if (_account.IsSigIn())
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="/Account" title="Manage">Xin chào @_account.GetUserName()!</a>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" action="/Account/Logout">
+                <button type="submit" class="nav-link btn btn-link text-dark">Thoát đăng nhập</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="/Account/Login">Đăng nhập</a>
+        </li>
+    }
+</ul>

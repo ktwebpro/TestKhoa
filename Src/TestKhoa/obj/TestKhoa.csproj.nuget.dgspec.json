@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\TestKhoa.csproj": {}
+    "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\TestKhoa.csproj": {}
   },
   "projects": {
-    "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\TestKhoa.csproj": {
+    "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\TestKhoa.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\TestKhoa.csproj",
+        "projectUniqueName": "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\TestKhoa.csproj",
         "projectName": "TestKhoa",
-        "projectPath": "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\TestKhoa.csproj",
+        "projectPath": "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\TestKhoa.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\obj\\",
+        "outputPath": "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

@@ -1,0 +1,157 @@
+﻿@model TestKhoaExample.CustomModels.IndexViewModel
+@{
+    ViewData["Title"] = "Thông tin tài khoản";
+}
+
+<div class="row">
+    <div class="col-lg-6">
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <div class="col-lg-6">
+        <div class="text-right">
+            <a class="btn btn-primary" href="/Account/ChangePassword">Đổi mật khẩu</a>
+        </div>
+    </div>
+</div>
+<hr />
+@*@Html.Partial("_StatusMessage", Model.StatusMessage)*@
+<form method="post" style="width:100%;" id="frmEditAccount" enctype="multipart/form-data" action="https://localhost:44314/api/account/save">
+    <input type="hidden" name="Type" id="Type" value="_Edit" />
+    <input type="hidden" name="Id" id="Id" value="@Model.Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <input asp-for="Username" class="form-control" disabled />
+            </div>
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <div class="input-group">
+                    <input asp-for="Email" class="form-control" />
+                    <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+                </div>
+                @*@if (Model.IsEmailConfirmed)
+                    {
+                    <div class="input-group">
+                        <input asp-for="Email" class="form-control" />
+                        <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+                    </div>
+                    }
+                    else
+                    {
+                        <input asp-for="Email" class="form-control" />
+                        <button asp-action="SendVerificationEmail" class="btn btn-link">Send verification email</button>
+                    }*@
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PhoneNumber">Điện thoại</label>
+                <input asp-for="PhoneNumber" name="Phone" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <p>
+                    <label for="UpAvatar">Avatar</label>
+                    <br />
+                    <input type="file" name="UpAvatar" id="UpAvatar" value="" />
+                </p>
+                @if (!string.IsNullOrEmpty(Model.Avatar))
+                {
+                    <p>
+                        <img style="max-width:50px;" src="https://localhost:44314/images/@Model.Avatar" alt="Alternate Text" />
+                    </p>
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label asp-for="FullName">Họ tên</label>
+                <div class="input-group">
+                    <input asp-for="FullName" class="form-control" />
+                    <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address">Địa chỉ</label>
+                <div class="input-group">
+                    <input asp-for="Address" class="form-control" />
+                    <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Gender">Giới tính</label>
+                <div class="input-group">
+                    <select asp-for="Gender" class="form-control">
+                        <option value="0">Nam</option>
+                        <option value="1">Nữ</option>
+                    </select>
+                    <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Status">Trạng thái</label>
+                <div class="input-group">
+                    <input type="text" disabled class="form-control" value="@(Model.Status == "1" ? "Tài khoản đã kích hoạt" : "Tài khoản chưa kích hoạt")" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center">
+        <button type="submit" id="cmdSave" class="btn btn-primary">Save</button>
+    </div>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+<script>
+    function getCookie(key) {
+        var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+        return keyValue ? keyValue[2] : null;
+    }
+</script>
+    <script type="text/javascript">
+        var frmEditAccount = $('#frmEditAccount');
+
+        frmEditAccount.submit(function (e) {
+
+            $("#cmdSave").attr("disabled");
+            $("#cmdSave").addClass("disabled");
+            $("#cmdSave").html('Đang lấy thông tin');
+
+            var _Data = new FormData(this);
+
+            e.preventDefault();
+
+            var _Header = {
+                "Authorization": 'Bearer ' + getCookie('User')
+            };
+
+            $.ajax({
+                type: frmEditAccount.attr('method'),
+                headers: _Header,
+                url: frmEditAccount.attr('action'),
+                data: _Data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response > 0) {
+                        document.location.reload();
+                    } else {
+                        alert(response);
+
+                        //$('#frmThemMoiAccount').trigger("reset");
+                        //$("#cmdSave").removeAttr("disabled");
+                        //$("#cmdSave").removeClass("disabled");
+                        //$("#cmdSave").html("Đăng nhập");
+                    }
+                },
+                error: function (data) {
+                    //alert('An error occurred.' + data.responseText);
+                    console.log(data);
+                },
+            });
+        });
+    </script>
+}

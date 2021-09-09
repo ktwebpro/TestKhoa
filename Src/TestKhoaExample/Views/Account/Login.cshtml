@@ -1,0 +1,78 @@
+﻿@{ ViewData["Title"] = "Đăng nhập"; }
+
+<form id="frmLogin" method="post" action="https://localhost:44314/api/account/login">
+    <h4>Đăng nhập</h4>
+    <hr>
+
+    <div class="form-group">
+        <label for="Input_Email">Username</label>
+        <input class="form-control valid" autocomplete="username" type="text" data-val="true" data-val-email="Vui lòng nhập địa chỉ email." data-val-required="Vui lòng nhập địa chỉ email." id="Input_Email" name="username" value="" aria-describedby="Input_Email-error" aria-invalid="false">
+        <span class="text-danger field-validation-valid" data-valmsg-for="Email" data-valmsg-replace="true"></span>
+    </div>
+    <div class="form-group">
+        <label for="Input_Password">Password</label>
+        <input class="form-control valid" autocomplete="current-password" type="password" data-val="true" data-val-required="Vui lòng nhập mật khẩu." id="Input_Password" name="password" aria-describedby="Input_Password-error" aria-invalid="false">
+        <span class="text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
+    </div>
+    @*<div class="form-group">
+        <div class="checkbox">
+            <label for="Input_RememberMe">
+                <input type="checkbox" data-val="true" data-val-required="The Remember me? field is required." id="Input_RememberMe" name="RememberMe" value="true">
+                Nhớ đăng nhập?
+            </label>
+        </div>
+    </div>*@
+    <div class="form-group">
+        <button id="login-submit" type="submit" class="btn btn-primary">Đăng nhập</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script type="text/javascript">
+        var frmLogin = $('#frmLogin');
+
+        frmLogin.submit(function (e) {
+
+            $("#login-submit").attr("disabled");
+            $("#login-submit").addClass("disabled");
+            $("#login-submit").html('Đang lấy thông tin');
+
+            e.preventDefault();
+
+            $.ajax({
+                type: frmLogin.attr('method'),
+                url: frmLogin.attr('action'),
+                data: frmLogin.serialize(),
+                success: function (response) {
+                    if (response.errorCode == '') {
+                        setCookie('User', response.token);
+                        document.location = '/';
+                    } else {
+                        alert(response.errorCode);
+
+                        $('#frmLogin').trigger("reset");
+                        $("#login-submit").removeAttr("disabled");
+                        $("#login-submit").removeClass("disabled");
+                        $("#login-submit").html("Đăng nhập");
+                    }
+                },
+                error: function (data) {
+                    //alert('An error occurred.' + data.responseText);
+                    console.log(data);
+                },
+            });
+        });
+    </script>
+<script>
+    function setCookie(key, value) {
+        var expires = new Date();
+        expires.setDate(expires.getDate() + 1); //1 day
+        document.cookie = key + '=' + value + ';path=/;expires=' + expires.toUTCString();
+    }
+
+    function getCookie(key) {
+        var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+        return keyValue ? keyValue[2] : null;
+    }
+</script>
+}

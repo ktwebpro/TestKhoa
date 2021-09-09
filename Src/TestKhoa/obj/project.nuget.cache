@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QUAhHEIoXizu3H4mRANBX1vjxRCnpHuyJuQ3jFXJQ29n+XaE1F13SBNo+kLiiHsDZ0+sQ9wcmsFzbgdjdU/AXw==",
+  "dgSpecHash": "PluhSfJ1yZiBKJZDw9Ni7VO6HpijZy5qCCkX4JLstKKdIbcJbqWXoG6xOS8MUcg6HZgWP9AXQ3Trm8x1JOZQrw==",
   "success": true,
-  "projectFilePath": "D:\\Fpt\\TestKhoa\\TestKhoa\\TestKhoa\\TestKhoa.csproj",
+  "projectFilePath": "D:\\Fpt\\TestKhoa\\TestKhoa\\Src\\TestKhoa\\TestKhoa.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Admin\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\Admin\\.nuget\\packages\\microsoft.aspnetcore.cryptography.internal\\5.0.6\\microsoft.aspnetcore.cryptography.internal.5.0.6.nupkg.sha512",
