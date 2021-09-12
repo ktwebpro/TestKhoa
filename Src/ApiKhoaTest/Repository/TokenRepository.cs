@@ -20,13 +20,6 @@ namespace ApiKhoaTest.Repository
 {
     public class TokenRepository: ITokenRepository
     {
-        private readonly ConnectDbContext _context;
-        public TokenRepository(ILogger<TokenRepository> logger,
-            ConnectDbContext Context
-            )
-        {
-            _context = Context;
-        }
         public JwtSecurityToken GetInfo(string strToken)
         {
             var handler = new JwtSecurityTokenHandler();
@@ -35,43 +28,43 @@ namespace ApiKhoaTest.Repository
         }
         public int GetUserIdFromToken(string strToken)
         {
-            string _KQ = "";
-            var _TokenInfo = GetInfo(strToken);
+            string _result = "0";
+            var _tokenInfo = GetInfo(strToken);
 
-            var _PayLoad = _TokenInfo.Payload.ToList();
-            if (_PayLoad.Count > 0)
+            var _payLoad = _tokenInfo.Payload.ToList();
+            if (_payLoad.Count > 0)
             {
-                foreach (var mPayLoad in _PayLoad)
+                foreach (var mPayLoad in _payLoad)
                 {
                     if (mPayLoad.Key.ToLower() == "userid")
                     {
-                        _KQ = mPayLoad.Value.ToString();
+                        _result = mPayLoad.Value.ToString();
                     }
                 }
             }
 
-            return int.Parse(_KQ);
+            return int.Parse(_result);
         }
         public string GetRoleNameFromToken(string strToken)
         {
-            string _KQ = "";
-            var _TokenInfo = GetInfo(strToken);
+            string _result = "";
+            var _tokenInfo = GetInfo(strToken);
 
-            var _PayLoad = _TokenInfo.Payload.ToList();
-            if (_PayLoad.Count > 0)
+            var _payLoad = _tokenInfo.Payload.ToList();
+            if (_payLoad.Count > 0)
             {
-                foreach (var mPayLoad in _PayLoad)
+                foreach (var mPayLoad in _payLoad)
                 {
                     if (mPayLoad.Key.ToLower() == "role")
                     {
-                        _KQ = mPayLoad.Value.ToString();
+                        _result = mPayLoad.Value.ToString();
                     }
                 }
             }
 
-            return _KQ;
+            return _result;
         }
-        public string GenerateToken(AccountModel _Account)
+        public string GenerateToken(AccountModel _account)
         {
             string key = "my_secret_key_12345"; //Secret key which will be used later during validation    
             var issuer = "http://localhost";  //normally this will be your site URL    
@@ -83,9 +76,9 @@ namespace ApiKhoaTest.Repository
             var permClaims = new List<Claim>();
             permClaims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             permClaims.Add(new Claim("valid", "1"));
-            permClaims.Add(new Claim("userid", _Account.AccountId.ToString()));
-            permClaims.Add(new Claim("name", _Account.UserName));
-            permClaims.Add(new Claim("role", _Account.Role));
+            permClaims.Add(new Claim("userid", _account.AccountId.ToString()));
+            permClaims.Add(new Claim("name", _account.UserName));
+            permClaims.Add(new Claim("role", _account.Role));
 
             //Create Security Token object by giving required parameters    
             var token = new JwtSecurityToken(issuer, //Issure    

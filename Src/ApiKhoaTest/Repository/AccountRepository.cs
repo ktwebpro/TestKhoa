@@ -17,55 +17,52 @@ namespace ApiKhoaTest.Repository
 {
     public class AccountRepository: IAccountRepository
     {
-        private readonly ConnectDbContext _context;
-        private readonly ITokenRepository _tokenRepository;
-        public AccountRepository(ILogger<AccountRepository> logger,
-            ConnectDbContext Context,
-            ITokenRepository tokenRepository
+        private readonly ConnectDbContext context;
+        public AccountRepository(
+            ConnectDbContext _context
             )
         {
-            _tokenRepository = tokenRepository;
-            _context = Context;
+            context = _context;
         }
         public async Task<List<AccountModel>> LoadListAll()
         {
-            var _ListUser = await _context.Account.ToListAsync();
-            var _ListResult = (from p in _ListUser
-                               select new AccountModel
-                               {
-                                   AccountId = p.AccountId,
-                                   Address = p.Address,
-                                   Avatar = p.Avatar,
-                                   Email = p.Email,
-                                   FullName = p.FullName,
-                                   Gender = p.Gender,
-                                   Password = p.Password,
-                                   Phone = p.Phone,
-                                   Role = GetUserRole(p.AccountId),
-                                   Status = p.Status,
-                                   UserName = p.UserName
-                               }).ToList();
-            return _ListResult;
+            var listUser = await (from p in context.Account
+                           join q in context.AccountRole on p.AccountId equals q.AccountId
+                           join r in context.Role on q.RoleId equals r.RoleId
+                           select new AccountModel {
+                               Address = p.Address,
+                               Avatar = p.Avatar,
+                               Email = p.Email,
+                               FullName = p.FullName,
+                               GenderName = (p.Gender != null && p.Gender == 1? "Nữ" : "Nam"),
+                               Password = p.Password,
+                               Phone = p.Phone,
+                               Role = r.RoleName,
+                               StatusName = (p.Status != null && p.Status == 1? "Đã kích hoạt": "Chưa kích hoạt"),
+                               Status = p.Status,
+                               UserName = p.UserName
+                           }).ToListAsync();
+            return listUser;
         }
         public async Task<List<Role>> GetListRoleAsync()
         {
-            return await _context.Role.ToListAsync();
+            return await context.Role.ToListAsync();
         }
         public async Task<string> GetUserRoleAsync(int iUserId)
         {
-            var _Role = await (from p in _context.AccountRole
-                         join q in _context.Role on p.AccountRoleId equals q.RoleId
+            var role = await (from p in context.AccountRole
+                         join q in context.Role on p.AccountRoleId equals q.RoleId
                          where p.AccountId == iUserId
                          select q).ToListAsync();
-            return _Role.Count > 0 ? _Role[0].RoleName : "";
+            return role.Count > 0 ? role[0].RoleName : "";
         }
         private string GetUserRole(int iUserId)
         {
-            var _Role = (from p in _context.AccountRole
-                         join q in _context.Role on p.RoleId equals q.RoleId
+            var role = (from p in context.AccountRole
+                         join q in context.Role on p.RoleId equals q.RoleId
                          where p.AccountId == iUserId
                          select q).ToList();
-            return _Role.Count > 0 ? _Role[0].RoleName : "";
+            return role.Count > 0 ? role[0].RoleName : "";
         }
         public async Task<AccountModel> SignInAsync(LoginViewModel req)
         {
@@ -73,7 +70,7 @@ namespace ApiKhoaTest.Repository
             string strUn = req.UserName.ToUpper();
             string strPW = req.Password;
 
-            var result = await _context.Account.Where(x => x.UserName.ToUpper() == strUn).SingleOrDefaultAsync();
+            var result = await context.Account.Where(x => x.UserName.ToUpper() == strUn).SingleOrDefaultAsync();
             if (result != null)
             {
                 strPW = Sha256(strPW);
@@ -96,7 +93,7 @@ namespace ApiKhoaTest.Repository
                         Role = GetUserRole(result.AccountId),
                         ErrorCode = ""
                     };
-                    model.Token = _tokenRepository.GenerateToken(model);
+                    //model.Token = tokenRepository.GenerateToken(model);
                 }
             }
             else
@@ -107,15 +104,15 @@ namespace ApiKhoaTest.Repository
         }
         public async Task<string> ChangePasswordAsync(int iUserId, string strNewPassword)
         {
-            var USER_PW = Sha256(strNewPassword).ToUpper();
-            var _User = await _context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserId);
+            var userPassHash = Sha256(strNewPassword).ToUpper();
+            var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserId);
 
-            if (_User != null && !string.IsNullOrEmpty(USER_PW))
+            if (user != null && !string.IsNullOrEmpty(userPassHash))
             {
-                _User.Password = USER_PW;
+                user.Password = userPassHash;
 
-                _context.Entry(_User).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
+                context.Entry(user).State = EntityState.Modified;
+                await context.SaveChangesAsync();
 
                 return "Đổi mật khẩu thành công";
             }
@@ -123,18 +120,18 @@ namespace ApiKhoaTest.Repository
         }
         public async Task<IndexViewModel> GetDetailAsync(int iUserid)
         {
-            var _User = await _context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
+            var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
             var model = new IndexViewModel
             {
-                Id = _User.AccountId,
-                Username = _User.UserName,
-                Email = _User.Email,
-                PhoneNumber = _User.Phone,
-                FullName = _User.FullName,
-                Address = _User.Address,
-                Gender = _User.Gender.Value,
-                Status = _User.Status.Value,
-                Avatar = _User.Avatar
+                Id = user.AccountId,
+                Username = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.Phone,
+                FullName = user.FullName,
+                Address = user.Address,
+                Gender = user.Gender.Value,
+                Status = user.Status.Value,
+                Avatar = user.Avatar
             };
             return model;
         }
@@ -142,12 +139,12 @@ namespace ApiKhoaTest.Repository
         {
             try
             {
-                var _User = await _context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
+                var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
 
-                if (_User != null)
+                if (user != null)
                 {
-                    _context.Account.Remove(_User);
-                    await _context.SaveChangesAsync();
+                    context.Account.Remove(user);
+                    await context.SaveChangesAsync();
                     return "";
                 }
                 return "User null";
@@ -165,13 +162,13 @@ namespace ApiKhoaTest.Repository
             {
                 string strPW;
 
-                var _User = await _context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
+                var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
 
-                if (_User != null)
+                if (user != null)
                 {
                     strPW = Sha256(strPassword);
 
-                    return (_User.Password.ToUpper() == strPW.ToUpper());
+                    return (user.Password.ToUpper() == strPW.ToUpper());
                 }
                 return false;
             }
@@ -182,67 +179,67 @@ namespace ApiKhoaTest.Repository
             }
 
         }
-        public async Task<int> SaveAsync(AccountModel _User, int iIdRole)
+        public async Task<int> SaveAsync(AccountModel user, int iIdRole)
         {
             try
             {
                 int id = 0;
-                if (_User.AccountId > 0)
+                if (user.AccountId > 0)
                 {
-                    var obj = await _context.Account.Where(n => n.AccountId == _User.AccountId).SingleOrDefaultAsync();
+                    var obj = await context.Account.Where(n => n.AccountId == user.AccountId).SingleOrDefaultAsync();
                     if (obj != null)
                     {
-                        obj.FullName = _User.FullName;
-                        obj.UserName = _User.Email;
-                        obj.Email = _User.Email;
-                        obj.Address = _User.Address;
-                        obj.Phone = _User.Phone;
-                        obj.Gender = _User.Gender;
-                        obj.Status = _User.Status;
-                        obj.Avatar = _User.Avatar;
+                        obj.FullName = user.FullName;
+                        obj.UserName = user.Email;
+                        obj.Email = user.Email;
+                        obj.Address = user.Address;
+                        obj.Phone = user.Phone;
+                        obj.Gender = user.Gender;
+                        obj.Status = user.Status;
+                        obj.Avatar = user.Avatar;
 
-                        _context.Account.Update(obj);
-                        await _context.SaveChangesAsync();
+                        context.Account.Update(obj);
+                        await context.SaveChangesAsync();
 
                         id = obj.AccountId;
                     }
                 }
                 else
                 {
-                    string USER_PW = Sha256(_User.Password);
+                    string userPassHash = Sha256(user.Password);
 
-                    var _NewUser = new Account
+                    var newUser = new Account
                     {
-                        FullName = _User.FullName,
-                        UserName = _User.Email,
-                        Email = _User.Email,
-                        Address = _User.Address,
-                        Phone = _User.Phone,
-                        Gender = _User.Gender,
-                        Status = _User.Status,
-                        Avatar = _User.Avatar,
-                        Password = USER_PW
+                        FullName = user.FullName,
+                        UserName = user.Email,
+                        Email = user.Email,
+                        Address = user.Address,
+                        Phone = user.Phone,
+                        Gender = user.Gender,
+                        Status = user.Status,
+                        Avatar = user.Avatar,
+                        Password = userPassHash
                     };
 
-                    await _context.Account.AddAsync(_NewUser);
-                    await _context.SaveChangesAsync();
+                    await context.Account.AddAsync(newUser);
+                    await context.SaveChangesAsync();
 
-                    id = (await _context.Account.OrderByDescending(p => p.AccountId).FirstOrDefaultAsync()).AccountId;
+                    id = (await context.Account.OrderByDescending(p => p.AccountId).FirstOrDefaultAsync()).AccountId;
                 }
 
-                var _CurrentUserRole = _context.AccountRole.Where(p => p.AccountId == id);
-                if (_CurrentUserRole.Count() > 0)
+                var currentUserRole = context.AccountRole.Where(p => p.AccountId == id);
+                if (currentUserRole.Count() > 0)
                 {
-                    _context.AccountRole.RemoveRange(_CurrentUserRole);
-                    await _context.SaveChangesAsync();
+                    context.AccountRole.RemoveRange(currentUserRole);
+                    await context.SaveChangesAsync();
                 }
 
-                var _NewUserRole = new AccountRole { 
+                var newUserRole = new AccountRole { 
                     AccountId = id,
                     RoleId = iIdRole
                 };
-                await _context.AddAsync(_NewUserRole);
-                await _context.SaveChangesAsync();
+                await context.AddAsync(newUserRole);
+                await context.SaveChangesAsync();
 
                 return id;
             }

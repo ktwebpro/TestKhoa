@@ -45,7 +45,8 @@
                 data: frmLogin.serialize(),
                 success: function (response) {
                     if (response.errorCode == '') {
-                        setCookie('User', response.token);
+                        setCookie('uToken', response.token);
+                        setCookie('User', response.userName + '|' + response.role);
                         document.location = '/';
                     } else {
                         alert(response.errorCode);

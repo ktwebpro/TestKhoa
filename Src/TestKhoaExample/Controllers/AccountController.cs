@@ -13,29 +13,27 @@ namespace TestKhoaExample.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly IAccountRepository _accountRepository;
-        private readonly ILogger<AccountController> _logger;
-        public AccountController(ILogger<AccountController> logger,
-            IAccountRepository accountRepository
+        private readonly IAccountRepository accountRepository;
+        public AccountController(
+            IAccountRepository _accountRepository
             )
         {
-            _accountRepository = accountRepository;
-            _logger = logger;
+            accountRepository = _accountRepository;
         }
-        public async Task<IActionResult> ChangePassword()
+        public IActionResult ChangePassword()
         {
-
             return View();
         }
         public async Task<IActionResult> Index()
         {
-            return View(await _accountRepository.LoadDetail());
+            return View(await accountRepository.LoadDetail());
         }
-        public IActionResult Login(string returnUrl = null)
+        public IActionResult Login()
         {
-            // Clear the existing external cookie to ensure a clean login process
-
-            ViewData["ReturnUrl"] = returnUrl;
+            if (accountRepository.IsSigIn())
+            {
+                Response.Redirect("/");
+            }
             return View();
         }
         public IActionResult Logout()
@@ -44,14 +42,9 @@ namespace TestKhoaExample.Controllers
             Response.Redirect("/");
             return Json(1);
         }
-        public async Task<IActionResult> List()
+        public IActionResult List()
         {
-            ViewBag.ListUser = await _accountRepository.LoadListUser();
-            ViewBag.ListRole = await _accountRepository.LoadListRoles();
-            ViewBag.UserId = !string.IsNullOrWhiteSpace(_accountRepository.GetUserId())
-                ? int.Parse(_accountRepository.GetUserId())
-                : 0;
-            ViewBag.CurrentRole = _accountRepository.GetRoleName();
+            
             return View();
         }
     }

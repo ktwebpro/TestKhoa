@@ -22,20 +22,18 @@ namespace ApiKhoaTest.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        private readonly IAccountRepository _accountRepository;
-        private readonly ITokenRepository _tokenRepository;
-        private readonly IWebHostEnvironment _environment;
-        public AccountController(IConfiguration config,
-            IAccountRepository accountRepository,
-            ITokenRepository tokenRepository,
-            IWebHostEnvironment environment
+        private readonly IAccountRepository accountRepository;
+        private readonly ITokenRepository tokenRepository;
+        private readonly IWebHostEnvironment environment;
+        public AccountController(
+            IAccountRepository _accountRepository,
+            ITokenRepository _tokenRepository,
+            IWebHostEnvironment _environment
             )
         {
-            _environment = environment;
-            _tokenRepository = tokenRepository;
-            _accountRepository = accountRepository;
-            _config = config;
+            environment = _environment;
+            tokenRepository = _tokenRepository;
+            accountRepository = _accountRepository;
         }
         /// <summary>
         /// asd
@@ -45,29 +43,29 @@ namespace ApiKhoaTest.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
-            return Ok(await _accountRepository.GetListRoleAsync());
+            return Ok(await accountRepository.GetListRoleAsync());
         }
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromForm] LoginViewModel model)
         {
-            return Ok(await _accountRepository.SignInAsync(model));
+            return Ok(await accountRepository.SignInAsync(model));
         }
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> ListUser()
         {
-            var _RoleName = _tokenRepository.GetRoleNameFromToken(await getToken());
-            var _UserList = await _accountRepository.LoadListAll();
-            switch (_RoleName)
+            var roleName = tokenRepository.GetRoleNameFromToken(await GetToken());
+            var userList = await accountRepository.LoadListAll();
+            switch (roleName)
             {
                 case "User":
                     return Ok("");
                 case "Admin":
-                    _UserList = _UserList.Where(p => p.Role.ToLower() == "user").ToList();
-                    return Ok(_UserList);
+                    userList = userList.Where(p => p.Role.ToLower() == "user").ToList();
+                    return Ok(userList);
                 case "SuperAdmin":
-                    return Ok(_UserList);
+                    return Ok(userList);
                 default:
                     return Ok("");
             }
@@ -77,25 +75,25 @@ namespace ApiKhoaTest.Controllers
         [Authorize]
         public async Task<IActionResult> GetDetailUser()
         {
-            var _UserId = await getUserId();
-            return Ok(await _accountRepository.GetDetailAsync(_UserId));
+            var userId = await GetUserId();
+            return Ok(await accountRepository.GetDetailAsync(userId));
         }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Remove([FromForm] int iUserId)
         {
-            return Ok(await _accountRepository.RemoveAsync(iUserId));
+            return Ok(await accountRepository.RemoveAsync(iUserId));
         }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordViewModel model)
         {
-            var _UserId = await getUserId();
+            var userId = await GetUserId();
 
-            var _CheckInfo = await _accountRepository.CheckInfoAsync(_UserId, model.OldPassword);
-            if (_CheckInfo)
+            var checkInfo = await accountRepository.CheckInfoAsync(userId, model.OldPassword);
+            if (checkInfo)
             {
-                return Ok(await _accountRepository.ChangePasswordAsync(_UserId, model.NewPassword));
+                return Ok(await accountRepository.ChangePasswordAsync(userId, model.NewPassword));
             }
             else
             {
@@ -104,24 +102,24 @@ namespace ApiKhoaTest.Controllers
         }
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Save([FromForm] SaveViewModel _Model)
+        public async Task<IActionResult> Save([FromForm] SaveViewModel model)
         {
-            var _User = new AccountModel();
-            var _UpHinhAvatar = Request.Form.Files["UpAvatar"];
+            var user = new AccountModel();
+            var upAvatar = Request.Form.Files["UpAvatar"];
 
-            if (_UpHinhAvatar != null)
+            if (upAvatar != null)
             {
-                _Model.Avatar = _UpHinhAvatar.FileName;
+                model.Avatar = upAvatar.FileName;
 
-                string _RootPath = _environment.WebRootPath;
-                string uploadsFolder = Path.Combine(_RootPath, "images/");
+                string RootPath = environment.WebRootPath;
+                string uploadsFolder = Path.Combine(RootPath, "images/");
 
                 #region Upload hình avatar
                 //UpHinhPC
 
-                if (!string.IsNullOrEmpty(_UpHinhAvatar.FileName))
+                if (!string.IsNullOrEmpty(upAvatar.FileName))
                 {
-                    string pathfile = Path.Combine(uploadsFolder, _UpHinhAvatar.FileName);
+                    string pathfile = Path.Combine(uploadsFolder, upAvatar.FileName);
 
                     if (!Directory.Exists(uploadsFolder))
                     {
@@ -130,50 +128,50 @@ namespace ApiKhoaTest.Controllers
 
                     using (var fileStream = new FileStream(pathfile, FileMode.Create))
                     {
-                        _UpHinhAvatar.CopyTo(fileStream);
+                        upAvatar.CopyTo(fileStream);
                     }
                 }
                 #endregion
             }
 
-            if (_Model.Type == "_Create")
+            if (model.Type == "Create")
             {
-                _User.AccountId = _Model.Id;
-                _User.FullName = _Model.FullName;
-                _User.UserName = _Model.UserName;
-                _User.Email = _Model.Email;
-                _User.Address = _Model.Address;
-                _User.Phone = _Model.Phone;
-                _User.Gender = _Model.Gender;
-                _User.Status = _Model.Status;
-                _User.Avatar = _Model.Avatar;
-                _User.Password = _Model.Password;
+                user.AccountId = model.Id;
+                user.FullName = model.FullName;
+                user.UserName = model.UserName;
+                user.Email = model.Email;
+                user.Address = model.Address;
+                user.Phone = model.Phone;
+                user.Gender = model.Gender;
+                user.Status = model.Status;
+                user.Avatar = model.Avatar;
+                user.Password = model.Password;
             }
-            else if (_Model.Type == "_Edit")
+            else if (model.Type == "Edit")
             {
-                _User = (await _accountRepository.LoadListAll()).FirstOrDefault(p => p.AccountId == _Model.Id);
-                
-                _User.FullName = _Model.FullName;
-                _User.UserName = _Model.Email;
-                _User.Email = _Model.Email;
-                _User.Address = _Model.Address;
-                _User.Phone = _Model.Phone;
-                _User.Gender = _Model.Gender;
-                _User.Status = _Model.Status;
-                if (!string.IsNullOrEmpty(_Model.Avatar))
+                user = (await accountRepository.LoadListAll()).FirstOrDefault(p => p.AccountId == model.Id);
+
+                user.FullName = model.FullName;
+                user.UserName = model.Email;
+                user.Email = model.Email;
+                user.Address = model.Address;
+                user.Phone = model.Phone;
+                user.Gender = model.Gender;
+                user.Status = model.Status;
+                if (!string.IsNullOrEmpty(model.Avatar))
                 {
-                    _User.Avatar = _Model.Avatar;
+                    user.Avatar = model.Avatar;
                 }
             }
-            return Ok(await _accountRepository.SaveAsync(_User, _Model.RoleId));
+            return Ok(await accountRepository.SaveAsync(user, model.RoleId));
         }
-        private async Task<int> getUserId()
+        private async Task<int> GetUserId()
         {
-            return _tokenRepository.GetUserIdFromToken(await getToken());
+            return tokenRepository.GetUserIdFromToken(await GetToken());
         }
-        private async Task<string> getToken()
+        private async Task<string> GetToken()
         {
-            return await HttpContext.GetTokenAsync("Bearer", "access_token");
+            return await HttpContext.GetTokenAsync("Bearer", "accesstoken");
         }
 
     }

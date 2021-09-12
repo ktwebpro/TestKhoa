@@ -19,133 +19,85 @@ namespace TestKhoaExample.Repository
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly IHttpContextAccessor _httpContext;
-        public AccountRepository(ILogger<AccountRepository> logger,
-            IHttpContextAccessor httpContext
+        private readonly IHttpContextAccessor httpContext;
+        public AccountRepository(
+            IHttpContextAccessor _httpContext
             )
         {
-            _httpContext = httpContext;
+            httpContext = _httpContext;
         }
         public bool IsSigIn()
         {
-            return _httpContext.HttpContext.Request.Cookies["User"] != null;
+            return httpContext.HttpContext.Request.Cookies["User"] != null;
         }
         public async Task<List<Role>> LoadListRoles()
         {
-            string _Token = _httpContext.HttpContext.Request.Cookies["User"];
+            string token = httpContext.HttpContext.Request.Cookies["User"];
             var client = new RestClient("https://localhost:44314/api/account/getroles")
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + _Token);
+            request.AddHeader("Authorization", "Bearer " + token);
             IRestResponse response = await client.ExecuteAsync(request);
             
             return JsonConvert.DeserializeObject<List<Role>>(response.Content);
         }
         public async Task<List<AccountModel>> LoadListUser()
         {
-            string _Token = _httpContext.HttpContext.Request.Cookies["User"];
+            string token = httpContext.HttpContext.Request.Cookies["User"];
             var client = new RestClient("https://localhost:44314/api/account/ListUser")
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + _Token);
+            request.AddHeader("Authorization", "Bearer " + token);
             IRestResponse response = await client.ExecuteAsync(request);
             
             return JsonConvert.DeserializeObject<List<AccountModel>>(response.Content);
         }
         public async Task<IndexViewModel> LoadDetail()
         {
-            string _Token = _httpContext.HttpContext.Request.Cookies["User"];
+            string token = httpContext.HttpContext.Request.Cookies["User"];
             var client = new RestClient("https://localhost:44314/api/account/getdetailuser")
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + _Token);
+            request.AddHeader("Authorization", "Bearer " + token);
             IRestResponse response = await client.ExecuteAsync(request);
 
             return JsonConvert.DeserializeObject<IndexViewModel>(response.Content);
         }
         public string GetRoleName()
         {
-            string _KQ = "";
-            string strToken;
-
-            if (IsSigIn())
-            {
-                strToken = _httpContext.HttpContext.Request.Cookies["User"];
-                var _TokenInfo = GetInfo(strToken);
-
-                var _PayLoad = _TokenInfo.Payload.ToList();
-                if (_PayLoad.Count > 0)
-                {
-                    foreach (var mPayLoad in _PayLoad)
-                    {
-                        if (mPayLoad.Key.ToLower() == "role")
-                        {
-                            _KQ = mPayLoad.Value.ToString();
-                        }
-                    }
-                }
-            }
-            return _KQ;
+            return GetInfo(1);
         }
         public string GetUserId()
         {
-            string _KQ = "";
-            string strToken;
-
-            if (IsSigIn())
-            {
-                strToken = _httpContext.HttpContext.Request.Cookies["User"];
-                var _TokenInfo = GetInfo(strToken);
-
-                var _PayLoad = _TokenInfo.Payload.ToList();
-                if (_PayLoad.Count > 0)
-                {
-                    foreach (var mPayLoad in _PayLoad)
-                    {
-                        if (mPayLoad.Key.ToLower() == "userid")
-                        {
-                            _KQ = mPayLoad.Value.ToString();
-                        }
-                    }
-                }
-            }
-            return _KQ;
+            return "0";
         }
         public string GetUserName()
         {
-            string _KQ = "";
-            string strToken;
-
-            if (IsSigIn())
-            {
-                strToken = _httpContext.HttpContext.Request.Cookies["User"];
-                var _TokenInfo = GetInfo(strToken);
-
-                var _PayLoad = _TokenInfo.Payload.ToList();
-                if (_PayLoad.Count > 0)
-                {
-                    foreach (var mPayLoad in _PayLoad)
-                    {
-                        if (mPayLoad.Key.ToLower() == "name")
-                        {
-                            _KQ = mPayLoad.Value.ToString();
-                        }
-                    }
-                }
-            }
-            return _KQ;
+            return GetInfo(0);
         }
-        private JwtSecurityToken GetInfo(string strToken)
+        private string GetInfo(int iOrder)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(strToken);
-            return (JwtSecurityToken)jsonToken;
+            if (!IsSigIn()
+                    || string.IsNullOrEmpty(httpContext.HttpContext.Request.Cookies["User"].ToString())
+                    || !httpContext.HttpContext.Request.Cookies["User"].Contains("|"))
+                return "";
+            else
+            {
+                string[] arrayUserInfo = httpContext.HttpContext.Request.Cookies["User"].Split("|");
+                return arrayUserInfo[iOrder];
+            }
         }
+        //private JwtSecurityToken GetInfo(string strToken)
+        //{
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonToken = handler.ReadToken(strToken);
+        //    return (JwtSecurityToken)jsonToken;
+        //}
     }
 }
