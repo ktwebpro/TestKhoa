@@ -12,48 +12,61 @@ using TestKhoa.Data;
 using Microsoft.Extensions.Logging;
 using ApiKhoaTest.Models;
 using ApiKhoaTest.CustomModels;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiKhoaTest.Repository
 {
     public class AccountRepository: IAccountRepository
     {
         private readonly ConnectDbContext context;
+        private readonly IHttpContextAccessor httpContext;
         public AccountRepository(
-            ConnectDbContext _context
+            ConnectDbContext _context,
+            IHttpContextAccessor _httpContext
             )
         {
+            httpContext = _httpContext;
             context = _context;
         }
         public async Task<List<AccountModel>> LoadListAll()
         {
             var listUser = await (from p in context.Account
-                           join q in context.AccountRole on p.AccountId equals q.AccountId
-                           join r in context.Role on q.RoleId equals r.RoleId
-                           select new AccountModel {
-                               Address = p.Address,
-                               Avatar = p.Avatar,
-                               Email = p.Email,
-                               FullName = p.FullName,
-                               GenderName = (p.Gender != null && p.Gender == 1? "Nữ" : "Nam"),
-                               Password = p.Password,
-                               Phone = p.Phone,
-                               Role = r.RoleName,
-                               StatusName = (p.Status != null && p.Status == 1? "Đã kích hoạt": "Chưa kích hoạt"),
-                               Status = p.Status,
-                               UserName = p.UserName
-                           }).ToListAsync();
+                                  join q in context.AccountRole on p.AccountId equals q.AccountId
+                                  join r in context.Role on q.RoleId equals r.RoleId
+                                  select new AccountModel
+                                  {
+                                      Address = p.Address,
+                                      Avatar = !string.IsNullOrEmpty(p.Avatar)
+                                      ? httpContext.HttpContext.Request.Scheme + "://" + httpContext.HttpContext.Request.Host + "/images/" + p.Avatar
+                                      : "",
+                                      Email = p.Email,
+                                      FullName = p.FullName,
+                                      GenderName = (p.Gender == 1 ? "Nữ" : "Nam"),
+                                      Gender = p.Gender,
+                                      Password = p.Password,
+                                      Phone = p.Phone,
+                                      Role = r.RoleName,
+                                      StatusName = (p.Status == 1 ? "Đã kích hoạt" : "Chưa kích hoạt"),
+                                      Status = p.Status,
+                                      UserName = p.UserName,
+                                      AccountId = p.AccountId,
+                                      UserCode = p.UserCode
+                                  }).ToListAsync();
+
+
             return listUser;
         }
         public async Task<List<Role>> GetListRoleAsync()
         {
             return await context.Role.ToListAsync();
         }
-        public async Task<string> GetUserRoleAsync(int iUserId)
+        public async Task<string> GetUserRoleAsync(string strUserCode)
         {
             var role = await (from p in context.AccountRole
-                         join q in context.Role on p.AccountRoleId equals q.RoleId
-                         where p.AccountId == iUserId
-                         select q).ToListAsync();
+                              join q in context.Role on p.AccountRoleId equals q.RoleId
+                              join r in context.Account on p.AccountId equals r.AccountId
+                              where r.UserCode == strUserCode
+                              select q).ToListAsync();
             return role.Count > 0 ? role[0].RoleName : "";
         }
         private string GetUserRole(int iUserId)
@@ -87,13 +100,13 @@ namespace ApiKhoaTest.Repository
                 {
                     model = new AccountModel
                     {
+                        UserCode = result.UserCode,
                         Email = result.Email,
                         UserName = result.UserName,
                         AccountId = result.AccountId,
                         Role = GetUserRole(result.AccountId),
                         ErrorCode = ""
                     };
-                    //model.Token = tokenRepository.GenerateToken(model);
                 }
             }
             else
@@ -102,10 +115,10 @@ namespace ApiKhoaTest.Repository
             }
             return model;
         }
-        public async Task<string> ChangePasswordAsync(int iUserId, string strNewPassword)
+        public async Task<string> ChangePasswordAsync(string strUserCode, string strNewPassword)
         {
             var userPassHash = Sha256(strNewPassword).ToUpper();
-            var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserId);
+            var user = await context.Account.FirstOrDefaultAsync(p => p.UserCode == strUserCode);
 
             if (user != null && !string.IsNullOrEmpty(userPassHash))
             {
@@ -118,9 +131,9 @@ namespace ApiKhoaTest.Repository
             }
             return "";
         }
-        public async Task<IndexViewModel> GetDetailAsync(int iUserid)
+        public async Task<IndexViewModel> GetDetailAsync(string strUserCode)
         {
-            var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
+            var user = await context.Account.FirstOrDefaultAsync(p => p.UserCode == strUserCode);
             var model = new IndexViewModel
             {
                 Id = user.AccountId,
@@ -129,8 +142,8 @@ namespace ApiKhoaTest.Repository
                 PhoneNumber = user.Phone,
                 FullName = user.FullName,
                 Address = user.Address,
-                Gender = user.Gender.Value,
-                Status = user.Status.Value,
+                Gender = user.Gender,
+                Status = user.Status,
                 Avatar = user.Avatar
             };
             return model;
@@ -156,13 +169,13 @@ namespace ApiKhoaTest.Repository
             }
 
         }
-        public async Task<bool> CheckInfoAsync(int iUserid, string strPassword)
+        public async Task<bool> CheckInfoAsync(string strUserCode, string strPassword)
         {
             try
             {
                 string strPW;
 
-                var user = await context.Account.FirstOrDefaultAsync(p => p.AccountId == iUserid);
+                var user = await context.Account.FirstOrDefaultAsync(p => p.UserCode == strUserCode);
 
                 if (user != null)
                 {
@@ -196,7 +209,10 @@ namespace ApiKhoaTest.Repository
                         obj.Phone = user.Phone;
                         obj.Gender = user.Gender;
                         obj.Status = user.Status;
-                        obj.Avatar = user.Avatar;
+                        if (!user.Avatar.Contains("http"))
+                        {
+                            obj.Avatar = user.Avatar;
+                        }
 
                         context.Account.Update(obj);
                         await context.SaveChangesAsync();
@@ -218,7 +234,8 @@ namespace ApiKhoaTest.Repository
                         Gender = user.Gender,
                         Status = user.Status,
                         Avatar = user.Avatar,
-                        Password = userPassHash
+                        Password = userPassHash,
+                        UserCode = GetRandomChar()
                     };
 
                     await context.Account.AddAsync(newUser);
@@ -264,6 +281,13 @@ namespace ApiKhoaTest.Repository
                 }
                 return builder.ToString();
             }
+        }
+        private string GetRandomChar()
+        {
+            string pNgauNhien = Guid.NewGuid().ToString();
+            string[] pMangNgauNhien = pNgauNhien.Split('-');
+
+            return pMangNgauNhien.Length > 0 ? pMangNgauNhien[0] : "";
         }
     }
 }

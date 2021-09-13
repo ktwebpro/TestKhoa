@@ -15,8 +15,8 @@
 </div>
 <hr />
 @*@Html.Partial("_StatusMessage", Model.StatusMessage)*@
-<form method="post" style="width:100%;" id="frmEditAccount" enctype="multipart/form-data" action="https://localhost:44314/api/account/save">
-    <input type="hidden" name="Type" id="Type" value="_Edit" />
+<form method="post" style="width:100%;" id="frmEditAccount" enctype="multipart/form-data" action="/account/apisave">
+    <input type="hidden" name="Type" id="Type" value="Edit" />
     <input type="hidden" name="Id" id="Id" value="@Model.Id" />
     <div asp-validation-summary="All" class="text-danger"></div>
     <div class="row">

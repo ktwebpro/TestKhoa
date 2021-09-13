@@ -1,5 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Danh sách thành viên";
+    var listUser = (List<TestKhoaExample.CustomModels.AccountModel>)ViewBag.ListUser;
+    var listRole = (List<TestKhoaExample.Models.Role>)ViewBag.ListRoles;
+    var userCode = ViewBag.UserCode;
+    var currentRole = ViewBag.CurrentRole;
 }
 <div class="row">
     <div class="col-lg-6">
@@ -28,42 +32,53 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td style="width:80px;">
-                <a href="#" style="display:inline" class="btn btn-sm cmdDeleteUser" data-id="{{AccountId}}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
-                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-                    </svg>
-                </a>
-                <a href="#" style="display:inline"
-                   data-id="{{AccountId}}" data-role="{{Role}}" data-username="{{UserName}}" data-address="{{Address}}"
-                   data-email="{{Email}}" data-fullname="{{FullName}}" data-phone="{{Phone}}"
-                   data-gender="{{Gender}}" data-status="{{Status}}" data-avatar="{{Avatar}}"
-                   data-toggle="modal" data-target="#modal_form_horizontal" class="btn btn-sm cmdEditUser">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
-                    </svg>
-                </a>
-            </td>
-            <td>{{UserName}}</td>
-            <td>{{FullName}}</td>
-            <td>{{Address}}</td>
-            <td>{{Email}}</td>
-            <td>{{Phone}}</td>
-            <td>{{GioiTinh}}</td>
-            <td>{{TrangThai}}</td>
-            <td>{{Avatar}}</td>
-            <td>{{Role}}</td>
-        </tr>
+        @foreach (var mThanhVien in listUser)
+        {
+            <tr>
+                <td style="width:80px;">
+                    @if (userCode != mThanhVien.UserCode)
+                    {
+                        <a href="#" style="display:inline" class="btn btn-sm cmdDeleteUser" data-id="@mThanhVien.AccountId">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
+                                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                            </svg>
+                        </a>
+                        <a href="#" style="display:inline"
+                           data-id="@mThanhVien.AccountId" data-role="@mThanhVien.Role" data-username="@mThanhVien.UserName" data-address="@mThanhVien.Address"
+                           data-email="@mThanhVien.Email" data-fullname="@mThanhVien.FullName" data-phone="@mThanhVien.Phone"
+                           data-gender="@mThanhVien.Gender" data-status="@mThanhVien.Status" data-avatar="@mThanhVien.Avatar"
+                           data-toggle="modal" data-target="#modal_form_horizontal" class="btn btn-sm cmdEditUser">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                            </svg>
+                        </a>
+                    }
+                </td>
+                <td>@mThanhVien.UserName</td>
+                <td>@mThanhVien.FullName</td>
+                <td>@mThanhVien.Address</td>
+                <td>@mThanhVien.Email</td>
+                <td>@mThanhVien.Phone</td>
+                <td>@mThanhVien.GenderName</td>
+                <td>@mThanhVien.StatusName</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(mThanhVien.Avatar))
+                    { 
+                        <img src="@mThanhVien.Avatar" style="max-width:50px;" />
+                    }
+                </td>
+                <td>@mThanhVien.Role</td>
+            </tr>
+        }
     </tbody>
 </table>
 <div id="modal_form_horizontal" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form action="https://localhost:44314/api/account/save" id="frmThemMoiAccount" enctype="multipart/form-data" method="post" class="form-horizontal">
-                <input type="hidden" name="Type" id="Type" value="_Create" />
+            <form action="/account/apisave" id="frmThemMoiAccount" enctype="multipart/form-data" method="post" class="form-horizontal">
+                <input type="hidden" name="Type" id="Type" value="Create" />
                 <input type="hidden" name="Id" id="Id" value="0" />
                 <div class="modal-body">
                     <fieldset class="mb-3">
@@ -73,12 +88,10 @@
                             <label class="col-form-label col-sm-3">Role</label>
                             <div class="col-sm-9">
                                 <select class="form-control select-search" name="RoleId" id="RoleId">
-                                    @*@foreach (var mRole in _ListRole.Where(p =>
-                                           _CurrentRole == "SuperAdmin" || (_CurrentRole == "Admin" && p.RoleName == "User")
-                                       ))
+                                    @foreach (var mRole in listRole)
                                     {
                                         <option value="@mRole.RoleId">@mRole.RoleName</option>
-                                    }*@
+                                    }
                                 </select>
                             </div>
                         </div>
@@ -86,7 +99,7 @@
                         <div class="form-group row">
                             <label class="col-form-label col-sm-3">UserName</label>
                             <div class="col-sm-9">
-                                <input type="text" required name="UserName" id="UserName" class="form-control">
+                                <input type="text" maxlength="50" required name="UserName" id="UserName" class="form-control">
                             </div>
                         </div>
 
@@ -100,28 +113,28 @@
                         <div class="form-group row">
                             <label class="col-form-label col-sm-3">Họ tên</label>
                             <div class="col-sm-9">
-                                <input type="text" name="FullName" id="FullName" class="form-control">
+                                <input type="text" maxlength="50" name="FullName" id="FullName" class="form-control">
                             </div>
                         </div>
 
                         <div class="form-group row">
                             <label class="col-form-label col-sm-3">Địa chỉ</label>
                             <div class="col-sm-9">
-                                <input type="text" name="Address" id="Address" class="form-control">
+                                <input type="text" maxlength="200" name="Address" id="Address" class="form-control">
                             </div>
                         </div>
 
                         <div class="form-group row">
                             <label class="col-form-label col-sm-3">Email</label>
                             <div class="col-sm-9">
-                                <input type="email" name="Email" id="Email" class="form-control">
+                                <input type="email" maxlength="50" name="Email" id="Email" class="form-control">
                             </div>
                         </div>
 
                         <div class="form-group row">
                             <label class="col-form-label col-sm-3">Điện thoại</label>
                             <div class="col-sm-9">
-                                <input type="number" name="Phone" id="Phone" class="form-control">
+                                <input type="number" maxlength="10" name="Phone" id="Phone" class="form-control">
                             </div>
                         </div>
 
@@ -178,7 +191,7 @@
         });
         $('#cmdAdd').click(function () {
             $('#frmTitle').text('Thêm mới thành viên');
-            $('#Type').val('_Create');
+            $('#Type').val('Create');
             $('#Id').val('0');
             $('#cmdSave').text('Thêm mới');
             $('#frmThemMoiAccount').trigger('reset');
@@ -199,7 +212,7 @@
                 $.ajax({
                     type: 'POST',
                     headers: _Header,
-                    url: 'https://localhost:44314/api/account/Remove',
+                    url: '/account/apiremove',
                     data: _Data,
                     cache: false,
                     contentType: false,
@@ -231,7 +244,7 @@
 
             if (_Avatar != '') {
                 $('#imgAvatar').show();
-                $('#imgAvatar').attr('src','https://localhost:44314/images/' + _Avatar);
+                $('#imgAvatar').attr('src', _Avatar);
             } else {
                 $('#imgAvatar').hide();
             }
@@ -250,7 +263,7 @@
 
             $('#Gender').val(_Gender);
             $('#Status').val(_Status);
-            $('#Type').val('_Edit');
+            $('#Type').val('Edit');
             $('#Id').val(_Id);
             $('#frmTitle').text('Cập nhật thành viên');
             $('#cmdSave').text('Cập nhật');
@@ -273,13 +286,8 @@
 
             e.preventDefault();
 
-            var _Header = {
-                "Authorization": 'Bearer ' + getCookie('User')
-            };
-
             $.ajax({
                 type: frmThemMoiAccount.attr('method'),
-                headers: _Header,
                 url: frmThemMoiAccount.attr('action'),
                 data: _Data,
                 cache: false,

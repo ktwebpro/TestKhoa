@@ -14,17 +14,21 @@ using Microsoft.AspNetCore.Http;
 using TestKhoaExample.CustomModels;
 using RestSharp;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace TestKhoaExample.Repository
 {
     public class AccountRepository : IAccountRepository
     {
         private readonly IHttpContextAccessor httpContext;
+        private readonly IConfiguration configuration;
         public AccountRepository(
-            IHttpContextAccessor _httpContext
+            IHttpContextAccessor _httpContext,
+            IConfiguration _configuration
             )
         {
             httpContext = _httpContext;
+            configuration = _configuration;
         }
         public bool IsSigIn()
         {
@@ -32,39 +36,38 @@ namespace TestKhoaExample.Repository
         }
         public async Task<List<Role>> LoadListRoles()
         {
-            string token = httpContext.HttpContext.Request.Cookies["User"];
-            var client = new RestClient("https://localhost:44314/api/account/getroles")
+            var client = new RestClient(LinkAPI() + "/api/account/getroles?strUser=" + User())
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + token);
+            request.AddHeader("Authorization", "Bearer " + Token());
+            request.AlwaysMultipartFormData = true;
             IRestResponse response = await client.ExecuteAsync(request);
             
             return JsonConvert.DeserializeObject<List<Role>>(response.Content);
         }
         public async Task<List<AccountModel>> LoadListUser()
         {
-            string token = httpContext.HttpContext.Request.Cookies["User"];
-            var client = new RestClient("https://localhost:44314/api/account/ListUser")
+            var client = new RestClient(LinkAPI() + "/api/account/ListUser?strUser=" + User())
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + token);
+            request.AddHeader("Authorization", "Bearer " + Token());
+            request.AlwaysMultipartFormData = true;
             IRestResponse response = await client.ExecuteAsync(request);
-            
+
             return JsonConvert.DeserializeObject<List<AccountModel>>(response.Content);
         }
         public async Task<IndexViewModel> LoadDetail()
         {
-            string token = httpContext.HttpContext.Request.Cookies["User"];
-            var client = new RestClient("https://localhost:44314/api/account/getdetailuser")
+            var client = new RestClient(LinkAPI() + "/api/account/getdetailuser?strUser=" + User())
             {
                 Timeout = -1
             };
             var request = new RestRequest(Method.GET);
-            request.AddHeader("Authorization", "Bearer " + token);
+            request.AddHeader("Authorization", "Bearer " + Token());
             IRestResponse response = await client.ExecuteAsync(request);
 
             return JsonConvert.DeserializeObject<IndexViewModel>(response.Content);
@@ -75,7 +78,7 @@ namespace TestKhoaExample.Repository
         }
         public string GetUserId()
         {
-            return "0";
+            return GetInfo(2);
         }
         public string GetUserName()
         {
@@ -93,6 +96,9 @@ namespace TestKhoaExample.Repository
                 return arrayUserInfo[iOrder];
             }
         }
+        private string LinkAPI() => configuration.GetSection("LINK_API").Value;
+        private string Token() => httpContext.HttpContext.Request.Cookies["uToken"];
+        private string User() => httpContext.HttpContext.Request.Cookies["User"];
         //private JwtSecurityToken GetInfo(string strToken)
         //{
         //    var handler = new JwtSecurityTokenHandler();

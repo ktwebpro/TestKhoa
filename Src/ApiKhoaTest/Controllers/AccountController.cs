@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -41,21 +42,41 @@ namespace ApiKhoaTest.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetRoles()
+        public async Task<IActionResult> GetRoles(string strUser)
         {
-            return Ok(await accountRepository.GetListRoleAsync());
+            var roleName = await accountRepository.GetUserRoleAsync(GetUserCode(strUser));
+            var listRole = await accountRepository.GetListRoleAsync();
+            switch (roleName)
+            {
+                case "User":
+                    return Ok("");
+                case "Admin":
+                    listRole = listRole.Where(p => p.RoleName.ToLower() == "user").ToList();
+                    return Ok(listRole);
+                case "SuperAdmin":
+                    return Ok(listRole);
+                default:
+                    return Ok("");
+            }
         }
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromForm] LoginViewModel model)
         {
-            return Ok(await accountRepository.SignInAsync(model));
+            var result = await accountRepository.SignInAsync(model);
+            if (string.IsNullOrEmpty(result.ErrorCode))
+            {
+                result.Token = tokenRepository.GenerateToken(result);
+            }
+
+            return Ok(result);
         }
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> ListUser()
+        public async Task<IActionResult> ListUser(string strUser)
         {
-            var roleName = tokenRepository.GetRoleNameFromToken(await GetToken());
+            //admin@gmail.com|Admin|N4TWuQ
+            var roleName = await accountRepository.GetUserRoleAsync(GetUserCode(strUser));
             var userList = await accountRepository.LoadListAll();
             switch (roleName)
             {
@@ -73,10 +94,9 @@ namespace ApiKhoaTest.Controllers
         }
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetDetailUser()
+        public async Task<IActionResult> GetDetailUser(string strUser)
         {
-            var userId = await GetUserId();
-            return Ok(await accountRepository.GetDetailAsync(userId));
+            return Ok(await accountRepository.GetDetailAsync(GetUserCode(strUser)));
         }
         [HttpPost]
         [Authorize]
@@ -88,12 +108,12 @@ namespace ApiKhoaTest.Controllers
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordViewModel model)
         {
-            var userId = await GetUserId();
+            var userCode = GetUserCode(Request.Form["strUser"]);
 
-            var checkInfo = await accountRepository.CheckInfoAsync(userId, model.OldPassword);
+            var checkInfo = await accountRepository.CheckInfoAsync(userCode, model.OldPassword);
             if (checkInfo)
             {
-                return Ok(await accountRepository.ChangePasswordAsync(userId, model.NewPassword));
+                return Ok(await accountRepository.ChangePasswordAsync(userCode, model.NewPassword));
             }
             else
             {
@@ -105,11 +125,14 @@ namespace ApiKhoaTest.Controllers
         public async Task<IActionResult> Save([FromForm] SaveViewModel model)
         {
             var user = new AccountModel();
-            var upAvatar = Request.Form.Files["UpAvatar"];
+            
+            var upAvatar = Request.Form["ByteImage"];
 
-            if (upAvatar != null)
+            if (!string.IsNullOrEmpty(upAvatar))
             {
-                model.Avatar = upAvatar.FileName;
+                var imageAvatar = LoadBase64(upAvatar);
+                string fileName = DateTime.Now.Millisecond.ToString() + ".jpg";
+                model.Avatar = fileName;
 
                 string RootPath = environment.WebRootPath;
                 string uploadsFolder = Path.Combine(RootPath, "images/");
@@ -117,19 +140,16 @@ namespace ApiKhoaTest.Controllers
                 #region Upload hình avatar
                 //UpHinhPC
 
-                if (!string.IsNullOrEmpty(upAvatar.FileName))
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    string pathfile = Path.Combine(uploadsFolder, upAvatar.FileName);
+                    string pathfile = Path.Combine(uploadsFolder, fileName);
 
                     if (!Directory.Exists(uploadsFolder))
                     {
                         Directory.CreateDirectory(uploadsFolder);
                     }
 
-                    using (var fileStream = new FileStream(pathfile, FileMode.Create))
-                    {
-                        upAvatar.CopyTo(fileStream);
-                    }
+                    imageAvatar.Save(pathfile);
                 }
                 #endregion
             }
@@ -142,8 +162,8 @@ namespace ApiKhoaTest.Controllers
                 user.Email = model.Email;
                 user.Address = model.Address;
                 user.Phone = model.Phone;
-                user.Gender = model.Gender;
-                user.Status = model.Status;
+                user.Gender = (byte)model.Gender;
+                user.Status = (sbyte)model.Status;
                 user.Avatar = model.Avatar;
                 user.Password = model.Password;
             }
@@ -156,8 +176,8 @@ namespace ApiKhoaTest.Controllers
                 user.Email = model.Email;
                 user.Address = model.Address;
                 user.Phone = model.Phone;
-                user.Gender = model.Gender;
-                user.Status = model.Status;
+                user.Gender = (byte)model.Gender;
+                user.Status = (sbyte)model.Status;
                 if (!string.IsNullOrEmpty(model.Avatar))
                 {
                     user.Avatar = model.Avatar;
@@ -165,13 +185,40 @@ namespace ApiKhoaTest.Controllers
             }
             return Ok(await accountRepository.SaveAsync(user, model.RoleId));
         }
-        private async Task<int> GetUserId()
+        private string GetUserCode(string strInfo)
         {
-            return tokenRepository.GetUserIdFromToken(await GetToken());
+            return GetInfo(strInfo, 2);
         }
-        private async Task<string> GetToken()
+        //private async Task<string> GetToken()
+        //{
+        //    return await HttpContext.GetTokenAsync("Bearer", "accesstoken");
+        //}
+        private string GetRoleNameFromToken(string strInfo)
         {
-            return await HttpContext.GetTokenAsync("Bearer", "accesstoken");
+            return GetInfo(strInfo, 1);
+        }
+        private string GetInfo(string strInfo, int iOrder)
+        {
+            if (string.IsNullOrEmpty(strInfo)
+                    || !strInfo.Contains("|"))
+                return "";
+            else
+            {
+                string[] arrayUserInfo = strInfo.Split("|");
+                if (arrayUserInfo.Length < 3)
+                    return "";
+                return arrayUserInfo[iOrder];
+            }
+        }
+        public static Image LoadBase64(string base64)
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            Image image;
+            using (MemoryStream ms = new MemoryStream(bytes))
+            {
+                image = Image.FromStream(ms);
+            }
+            return image;
         }
 
     }

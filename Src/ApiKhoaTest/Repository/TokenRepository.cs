@@ -20,50 +20,50 @@ namespace ApiKhoaTest.Repository
 {
     public class TokenRepository: ITokenRepository
     {
-        public JwtSecurityToken GetInfo(string strToken)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(strToken);
-            return (JwtSecurityToken)jsonToken;
-        }
-        public int GetUserIdFromToken(string strToken)
-        {
-            string _result = "0";
-            var _tokenInfo = GetInfo(strToken);
+        //public JwtSecurityToken GetInfo(string strToken)
+        //{
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonToken = handler.ReadToken(strToken);
+        //    return (JwtSecurityToken)jsonToken;
+        //}
+        //public int GetUserIdFromToken(string strToken)
+        //{
+        //    string _result = "0";
+        //    var _tokenInfo = GetInfo(strToken);
 
-            var _payLoad = _tokenInfo.Payload.ToList();
-            if (_payLoad.Count > 0)
-            {
-                foreach (var mPayLoad in _payLoad)
-                {
-                    if (mPayLoad.Key.ToLower() == "userid")
-                    {
-                        _result = mPayLoad.Value.ToString();
-                    }
-                }
-            }
+        //    var _payLoad = _tokenInfo.Payload.ToList();
+        //    if (_payLoad.Count > 0)
+        //    {
+        //        foreach (var mPayLoad in _payLoad)
+        //        {
+        //            if (mPayLoad.Key.ToLower() == "userid")
+        //            {
+        //                _result = mPayLoad.Value.ToString();
+        //            }
+        //        }
+        //    }
 
-            return int.Parse(_result);
-        }
-        public string GetRoleNameFromToken(string strToken)
-        {
-            string _result = "";
-            var _tokenInfo = GetInfo(strToken);
+        //    return int.Parse(_result);
+        //}
+        //public string GetRoleNameFromToken(string strToken)
+        //{
+        //    string _result = "";
+        //    var _tokenInfo = GetInfo(strToken);
 
-            var _payLoad = _tokenInfo.Payload.ToList();
-            if (_payLoad.Count > 0)
-            {
-                foreach (var mPayLoad in _payLoad)
-                {
-                    if (mPayLoad.Key.ToLower() == "role")
-                    {
-                        _result = mPayLoad.Value.ToString();
-                    }
-                }
-            }
+        //    var _payLoad = _tokenInfo.Payload.ToList();
+        //    if (_payLoad.Count > 0)
+        //    {
+        //        foreach (var mPayLoad in _payLoad)
+        //        {
+        //            if (mPayLoad.Key.ToLower() == "role")
+        //            {
+        //                _result = mPayLoad.Value.ToString();
+        //            }
+        //        }
+        //    }
 
-            return _result;
-        }
+        //    return _result;
+        //}
         public string GenerateToken(AccountModel _account)
         {
             string key = "my_secret_key_12345"; //Secret key which will be used later during validation    

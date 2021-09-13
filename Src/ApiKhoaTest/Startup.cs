@@ -18,6 +18,8 @@ using TestKhoa.Data;
 using Microsoft.EntityFrameworkCore;
 using ApiKhoaTest.IRepository;
 using ApiKhoaTest.Repository;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiKhoaTest
 {
@@ -34,7 +36,7 @@ namespace ApiKhoaTest
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient();
-
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(

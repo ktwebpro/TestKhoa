@@ -1,6 +1,6 @@
 ﻿@{ ViewData["Title"] = "Đăng nhập"; }
 
-<form id="frmLogin" method="post" action="https://localhost:44314/api/account/login">
+<form id="frmLogin" method="post" action="/account/apilogin">
     <h4>Đăng nhập</h4>
     <hr>
 
@@ -46,7 +46,7 @@
                 success: function (response) {
                     if (response.errorCode == '') {
                         setCookie('uToken', response.token);
-                        setCookie('User', response.userName + '|' + response.role);
+                        setCookie('User', response.userName + '|' + response.role + '|' + response.userCode);
                         document.location = '/';
                     } else {
                         alert(response.errorCode);

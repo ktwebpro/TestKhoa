@@ -11,9 +11,9 @@ namespace ApiKhoaTest.IRepository
 {
     public interface ITokenRepository
     {
-        int GetUserIdFromToken(string strToken);
-        string GetRoleNameFromToken(string strToken);
+        //int GetUserIdFromToken(string strToken);
+        //string GetRoleNameFromToken(string strToken);
         string GenerateToken(AccountModel _account);
-        JwtSecurityToken GetInfo(string strToken);
+        //JwtSecurityToken GetInfo(string strToken);
     }
 }
