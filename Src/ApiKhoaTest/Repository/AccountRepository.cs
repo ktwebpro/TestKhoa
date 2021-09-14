@@ -63,7 +63,7 @@ namespace ApiKhoaTest.Repository
         public async Task<string> GetUserRoleAsync(string strUserCode)
         {
             var role = await (from p in context.AccountRole
-                              join q in context.Role on p.AccountRoleId equals q.RoleId
+                              join q in context.Role on p.RoleId equals q.RoleId
                               join r in context.Account on p.AccountId equals r.AccountId
                               where r.UserCode == strUserCode
                               select q).ToListAsync();

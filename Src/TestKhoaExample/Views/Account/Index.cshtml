@@ -18,6 +18,7 @@
 <form method="post" style="width:100%;" id="frmEditAccount" enctype="multipart/form-data" action="/account/apisave">
     <input type="hidden" name="Type" id="Type" value="Edit" />
     <input type="hidden" name="Id" id="Id" value="@Model.Id" />
+    <input type="hidden" name="Status" id="Status" value="@Model.Status" />
     <div asp-validation-summary="All" class="text-danger"></div>
     <div class="row">
         <div class="col-lg-6">
