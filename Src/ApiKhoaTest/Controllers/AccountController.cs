@@ -42,22 +42,10 @@ namespace ApiKhoaTest.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetRoles(string strUser)
+        public async Task<IActionResult> GetRoles()
         {
-            var roleName = await accountRepository.GetUserRoleAsync(GetUserCode(strUser));
             var listRole = await accountRepository.GetListRoleAsync();
-            switch (roleName)
-            {
-                case "User":
-                    return Ok("");
-                case "Admin":
-                    listRole = listRole.Where(p => p.RoleName.ToLower() == "user").ToList();
-                    return Ok(listRole);
-                case "SuperAdmin":
-                    return Ok(listRole);
-                default:
-                    return Ok("");
-            }
+            return Ok(listRole);
         }
         [HttpPost]
         [AllowAnonymous]
@@ -73,22 +61,17 @@ namespace ApiKhoaTest.Controllers
         }
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> ListUser(string strUser)
+        public async Task<IActionResult> ListUser()
         {
-            //admin@gmail.com|Admin|N4TWuQ
-            var roleName = await accountRepository.GetUserRoleAsync(GetUserCode(strUser));
-            var userList = await accountRepository.LoadListAll();
-            switch (roleName)
+            try
             {
-                case "User":
-                    return Ok("");
-                case "Admin":
-                    userList = userList.Where(p => p.Role.ToLower() == "user").ToList();
-                    return Ok(userList);
-                case "SuperAdmin":
-                    return Ok(userList);
-                default:
-                    return Ok("");
+                var userList = await accountRepository.LoadListAll();
+                return Ok(userList);
+            }
+            catch (Exception ex)
+            {
+                return Ok("err:" + ex.Message.ToString());
+                throw;
             }
 
         }
@@ -96,7 +79,7 @@ namespace ApiKhoaTest.Controllers
         [Authorize]
         public async Task<IActionResult> GetDetailUser(string strUser)
         {
-            return Ok(await accountRepository.GetDetailAsync(GetUserCode(strUser)));
+            return Ok(await accountRepository.GetDetailAsync(strUser));
         }
         [HttpPost]
         [Authorize]
@@ -108,7 +91,7 @@ namespace ApiKhoaTest.Controllers
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordViewModel model)
         {
-            var userCode = GetUserCode(Request.Form["strUser"]);
+            var userCode = Request.Form["strUser"];
 
             var checkInfo = await accountRepository.CheckInfoAsync(userCode, model.OldPassword);
             if (checkInfo)
@@ -185,31 +168,10 @@ namespace ApiKhoaTest.Controllers
             }
             return Ok(await accountRepository.SaveAsync(user, model.RoleId));
         }
-        private string GetUserCode(string strInfo)
-        {
-            return GetInfo(strInfo, 2);
-        }
         //private async Task<string> GetToken()
         //{
         //    return await HttpContext.GetTokenAsync("Bearer", "accesstoken");
         //}
-        private string GetRoleNameFromToken(string strInfo)
-        {
-            return GetInfo(strInfo, 1);
-        }
-        private string GetInfo(string strInfo, int iOrder)
-        {
-            if (string.IsNullOrEmpty(strInfo)
-                    || !strInfo.Contains("|"))
-                return "";
-            else
-            {
-                string[] arrayUserInfo = strInfo.Split("|");
-                if (arrayUserInfo.Length < 3)
-                    return "";
-                return arrayUserInfo[iOrder];
-            }
-        }
         public static Image LoadBase64(string base64)
         {
             byte[] bytes = Convert.FromBase64String(base64);

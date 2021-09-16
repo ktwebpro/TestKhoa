@@ -15,6 +15,8 @@ using TestKhoaExample.CustomModels;
 using RestSharp;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 namespace TestKhoaExample.Repository
 {
@@ -32,11 +34,11 @@ namespace TestKhoaExample.Repository
         }
         public bool IsSigIn()
         {
-            return httpContext.HttpContext.Request.Cookies["User"] != null;
+            return GetUserId() != "";
         }
         public async Task<List<Role>> LoadListRoles()
         {
-            var client = new RestClient(LinkAPI() + "/api/account/getroles?strUser=" + User())
+            var client = new RestClient(LinkAPI() + "/api/account/getroles")
             {
                 Timeout = -1
             };
@@ -44,12 +46,19 @@ namespace TestKhoaExample.Repository
             request.AddHeader("Authorization", "Bearer " + Token());
             request.AlwaysMultipartFormData = true;
             IRestResponse response = await client.ExecuteAsync(request);
-            
-            return JsonConvert.DeserializeObject<List<Role>>(response.Content);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                httpContext.HttpContext.Response.Redirect("/Home/Error?errcode=" + "Bạn không có quyền truy cập");
+                return null;
+            }
+            else
+            {
+                return JsonConvert.DeserializeObject<List<Role>>(response.Content);
+            }
         }
         public async Task<List<AccountModel>> LoadListUser()
         {
-            var client = new RestClient(LinkAPI() + "/api/account/ListUser?strUser=" + User())
+            var client = new RestClient(LinkAPI() + "/api/account/ListUser")
             {
                 Timeout = -1
             };
@@ -58,11 +67,27 @@ namespace TestKhoaExample.Repository
             request.AlwaysMultipartFormData = true;
             IRestResponse response = await client.ExecuteAsync(request);
 
-            return JsonConvert.DeserializeObject<List<AccountModel>>(response.Content);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                httpContext.HttpContext.Response.Redirect("/Account/AccessDenied");
+                return null;
+            }
+            else
+            {
+                if (response.Content.Contains("err:"))
+                {
+                    httpContext.HttpContext.Response.Redirect("/Home/Error?err=" + response.Content.Replace("err:",""));
+                    return null;
+                }
+                else
+                {
+                    return JsonConvert.DeserializeObject<List<AccountModel>>(response.Content);
+                }
+            }
         }
         public async Task<IndexViewModel> LoadDetail()
         {
-            var client = new RestClient(LinkAPI() + "/api/account/getdetailuser?strUser=" + User())
+            var client = new RestClient(LinkAPI() + "/api/account/getdetailuser?strUser=" + GetUserId())
             {
                 Timeout = -1
             };
@@ -70,35 +95,46 @@ namespace TestKhoaExample.Repository
             request.AddHeader("Authorization", "Bearer " + Token());
             IRestResponse response = await client.ExecuteAsync(request);
 
-            return JsonConvert.DeserializeObject<IndexViewModel>(response.Content);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                httpContext.HttpContext.Response.Redirect("/Account/AccessDenied");
+                return null;
+            }
+            else
+            {
+                return JsonConvert.DeserializeObject<IndexViewModel>(response.Content);
+            }
         }
         public string GetRoleName()
         {
-            return GetInfo(1);
+            var claims = httpContext.HttpContext.User.Claims
+                .FirstOrDefault(p => p.Type == ClaimTypes.Role.ToString())
+                ;
+
+            return claims != null ? claims.Value : "";
         }
         public string GetUserId()
         {
-            return GetInfo(2);
+            var claims = httpContext.HttpContext.User.Claims
+                .FirstOrDefault(p => p.Type == ClaimTypes.Sid.ToString())
+                ;
+            return claims != null ? claims.Value : "";
         }
         public string GetUserName()
         {
-            return GetInfo(0);
-        }
-        private string GetInfo(int iOrder)
-        {
-            if (!IsSigIn()
-                    || string.IsNullOrEmpty(httpContext.HttpContext.Request.Cookies["User"].ToString())
-                    || !httpContext.HttpContext.Request.Cookies["User"].Contains("|"))
-                return "";
-            else
-            {
-                string[] arrayUserInfo = httpContext.HttpContext.Request.Cookies["User"].Split("|");
-                return arrayUserInfo[iOrder];
-            }
+            var claims = httpContext.HttpContext.User.Claims
+                .FirstOrDefault(p => p.Type == ClaimTypes.Name.ToString())
+                ;
+            return claims != null ? claims.Value : "";
         }
         private string LinkAPI() => configuration.GetSection("LINK_API").Value;
-        private string Token() => httpContext.HttpContext.Request.Cookies["uToken"];
-        private string User() => httpContext.HttpContext.Request.Cookies["User"];
+        private string Token() {
+            var claims = httpContext.HttpContext.User.Claims
+                    .FirstOrDefault(p => p.Type == "Token")
+                    ;
+
+            return claims != null ? claims.Value : "";
+        }
         //private JwtSecurityToken GetInfo(string strToken)
         //{
         //    var handler = new JwtSecurityTokenHandler();

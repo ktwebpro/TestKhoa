@@ -29,13 +29,14 @@ namespace ApiKhoaTest.Models
         public string Address { get; set; }
         [DisplayName("Email")]
         [MaxLength(50)]
+        [EmailAddress]
         public string Email { get; set; }
         [DisplayName("Điện thoại")]
         [MaxLength(15)]
+        [Phone]
         public string Phone { get; set; }
         [DisplayName("Giới tính")]
         [Range(1,5)]
-        
         public byte Gender { get; set; }
         [DisplayName("Trạng thái")]
         [Range(1, 5)]

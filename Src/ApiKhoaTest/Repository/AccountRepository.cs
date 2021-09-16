@@ -235,7 +235,8 @@ namespace ApiKhoaTest.Repository
                         Status = user.Status,
                         Avatar = user.Avatar,
                         Password = userPassHash,
-                        UserCode = GetRandomChar()
+                        //UserCode = GetRandomChar()
+                        UserCode = Guid.NewGuid().ToString()
                     };
 
                     await context.Account.AddAsync(newUser);

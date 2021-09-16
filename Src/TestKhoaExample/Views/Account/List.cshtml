@@ -219,7 +219,11 @@
                     processData: false,
                     success: function (data) {
                         //document.location.reload();
-                        
+                        if (data.includes('Error')) {
+                            alert(data.replace(/Error: /g,''));
+                        } else {
+                            document.location.reload();
+                        }
                     },
                     error: function (data) {
 
@@ -294,10 +298,10 @@
                 contentType: false,
                 processData: false,
                 success: function (response) {
-                    if (response > 0) {
+                    if (response != 401) {
                         document.location.reload();
                     } else {
-                        alert(response);
+                        alert('Bạn không có quyền truy cập');
 
                         //$('#frmThemMoiAccount').trigger("reset");
                         //$("#cmdSave").removeAttr("disabled");

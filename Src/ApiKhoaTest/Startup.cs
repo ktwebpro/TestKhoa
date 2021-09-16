@@ -36,7 +36,7 @@ namespace ApiKhoaTest
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient();
-            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(
@@ -57,6 +57,7 @@ namespace ApiKhoaTest
                     Configuration.GetConnectionString("AppDb")));
 
             services.AddControllers();
+
             string issuer = "http://localhost";
             string signingKey = "my_secret_key_12345";
             byte[] signingKeyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey);

@@ -12,65 +12,90 @@ using Microsoft.Extensions.Configuration;
 using TestKhoaExample.Models;
 using static System.Net.Mime.MediaTypeNames;
 using System.IO;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TestKhoaExample.Controllers
 {
     public class AccountController : Controller
     {
         private readonly IAccountRepository accountRepository;
-        private readonly IConfiguration config;
+        private readonly IConfiguration configuration;
         public AccountController(
             IAccountRepository _accountRepository,
-            IConfiguration _config
+            IConfiguration _configuration
             )
         {
-            config = _config;
+            configuration = _configuration;
             accountRepository = _accountRepository;
         }
+        [Authorize]
         public IActionResult ChangePassword()
         {
             return View();
         }
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-            if (!accountRepository.IsSigIn())
-            {
-                Response.Redirect("/");
-                return Json("");
-            }
             return View(await accountRepository.LoadDetail());
         }
         public IActionResult Login()
         {
-            if (accountRepository.IsSigIn())
-            {
-                Response.Redirect("/");
-            }
             return View();
         }
-        public IActionResult Logout()
+        public IActionResult AccessDenied()
         {
-            Response.Cookies.Delete("User");
-            Response.Cookies.Delete("uToken");
+            return View();
+        }
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme);
             Response.Redirect("/");
             return Json(1);
         }
+        [Authorize(Roles ="SuperAdmin,Admin")]
         public async Task<IActionResult> List()
         {
+            var currentRoleName = accountRepository.GetRoleName();
             if (!accountRepository.IsSigIn()
-                || accountRepository.GetRoleName().ToLower() == "user"
+                || currentRoleName.ToLower() == "user"
                 )
             {
                 Response.Redirect("/");
                 return Json("");
             }
 
-            ViewBag.ListUser = await accountRepository.LoadListUser();
-            ViewBag.ListRoles = await accountRepository.LoadListRoles();
+            var listUser = await accountRepository.LoadListUser();
+            var listRole = await accountRepository.LoadListRoles();
+            switch (currentRoleName)
+            {
+                case "SuperAdmin":
+                    break;
+                case "Admin":
+                    listRole = listRole.Where(p => p.RoleName == "User").ToList();
+                    listUser = listUser.Where(p => p.Role == "User").ToList();
+                    break;
+                case "User":
+                    listRole = new List<Role>();
+                    listUser = new List<AccountModel>();
+                    break;
+                default:
+                    listRole = new List<Role>();
+                    listUser = new List<AccountModel>();
+                    break;
+            }
+
+            ViewBag.ListUser = listUser;
+            ViewBag.ListRoles = listRole;
             ViewBag.UserCode = accountRepository.GetUserId();
             ViewBag.CurrentRole = accountRepository.GetRoleName();
             return View();
         }
+        [Authorize(Roles = "SuperAdmin,Admin")]
         public IActionResult ApiSave(SaveViewModel model)
         {
             var client = new RestClient(LinkAPI() + "/api/account/save")
@@ -112,9 +137,15 @@ namespace TestKhoaExample.Controllers
 
             IRestResponse response = client.Execute(request);
 
-            var result = JsonConvert.DeserializeObject<int>(response.Content);
-
-            return Json(result);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                return Json(401);
+            }
+            else
+            {
+                var result = JsonConvert.DeserializeObject<int>(response.Content);
+                return Json(result);
+            }
         }
         public IActionResult ApiChangePassword(ChangePasswordViewModel model)
         {
@@ -133,14 +164,21 @@ namespace TestKhoaExample.Controllers
             request.AddParameter("NewPassword", model.NewPassword);
             request.AddParameter("ConfirmPassword", model.ConfirmPassword);
             request.AddParameter("StatusMessage", model.StatusMessage);
-            request.AddParameter("strUser", User());
+            request.AddParameter("strUser", GetUserId());
 
             IRestResponse response = client.Execute(request);
 
-            var result = JsonConvert.DeserializeObject<string>(response.Content);
-
-            return Json(result);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                return Json("Error: Bạn không có quyền truy cập");
+            }
+            else
+            {
+                var result = JsonConvert.DeserializeObject<string>(response.Content);
+                return Json(result);
+            }
         }
+        [Authorize(Roles = "SuperAdmin,Admin")]
         public IActionResult ApiRemove(int iUserId)
         {
             var client = new RestClient(LinkAPI() + "/api/account/remove")
@@ -157,11 +195,17 @@ namespace TestKhoaExample.Controllers
             request.AddParameter("iUserId", iUserId);
             IRestResponse response = client.Execute(request);
 
-            var result = JsonConvert.DeserializeObject<string>(response.Content);
-
-            return Json(result);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                return Json("Error: Bạn không có quyền truy cập");
+            }
+            else
+            {
+                var result = JsonConvert.DeserializeObject<string>(response.Content);
+                return Json(result);
+            }
         }
-        public IActionResult ApiLogin(LoginViewModel model)
+        public async Task<IActionResult> ApiLogin(LoginViewModel model)
         {
             var client = new RestClient(LinkAPI() + "/api/account/login")
             {
@@ -175,12 +219,63 @@ namespace TestKhoaExample.Controllers
             request.AddParameter("password", model.Password);
             IRestResponse response = client.Execute(request);
 
-            var result = JsonConvert.DeserializeObject<AccountModel>(response.Content);
+            if (response.StatusCode.ToString().Contains("Unauthorized"))
+            {
+                return Json(new AccountModel { 
+                    ErrorCode = "Bạn không có quyền truy cập"
+                });
+            }
+            else
+            {
+                var result = JsonConvert.DeserializeObject<AccountModel>(response.Content);
 
-            return Json(result);
+                if (string.IsNullOrEmpty(result.ErrorCode))
+                {
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, result.UserName),
+                        new Claim(ClaimTypes.Sid, result.UserCode),
+                        //new Claim("FullName", result.FullName),
+                        new Claim("Token", result.Token),
+                        new Claim(ClaimTypes.Role, result.Role),
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(
+                        claims,
+                        CookieAuthenticationDefaults.AuthenticationScheme
+                        );
+
+                    var authProperties = new AuthenticationProperties
+                    {
+                        //AllowRefresh = <bool>,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5),
+                        //IsPersistent = true,
+                        //IssuedUtc = <DateTimeOffset>,
+                        //RedirectUri = <string>
+                    };
+
+                    await HttpContext.SignInAsync(
+                            CookieAuthenticationDefaults.AuthenticationScheme,
+                            new ClaimsPrincipal(claimsIdentity),
+                            authProperties);
+                }
+
+                return Json(result);
+            }
         }
-        private string LinkAPI() => config.GetSection("LINK_API").Value;
-        private string Token() => Request.Cookies["uToken"];
-        private string User() => Request.Cookies["User"];
+        private string LinkAPI() => configuration.GetSection("LINK_API").Value;
+        private string Token() {
+            var claims = HttpContext.User.Claims
+                    .FirstOrDefault(p => p.Type == "Token")
+                    ;
+            return claims != null ? claims.Value : "";
+        }
+        private string GetUserId()
+        {
+            var claims = HttpContext.User.Claims
+                .FirstOrDefault(p => p.Type == ClaimTypes.Sid.ToString())
+                ;
+            return claims != null ? claims.Value : "";
+        }
     }
 }

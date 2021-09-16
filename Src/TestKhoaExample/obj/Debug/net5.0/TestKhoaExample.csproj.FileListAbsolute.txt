@@ -124,3 +124,4 @@ D:\Fpt\TestKhoa\TestKhoa\Src\TestKhoaExample\obj\Debug\net5.0\Razor\Views\Accoun
 D:\Fpt\TestKhoa\TestKhoa\Src\TestKhoaExample\bin\Debug\net5.0\RestSharp.dll
 D:\Fpt\TestKhoa\TestKhoa\Src\TestKhoaExample\obj\Debug\net5.0\Razor\Views\Account\Index.cshtml.g.cs
 D:\Fpt\TestKhoa\TestKhoa\Src\TestKhoaExample\obj\Debug\net5.0\Razor\Views\Account\ChangePassword.cshtml.g.cs
+D:\Fpt\TestKhoa\TestKhoa\Src\TestKhoaExample\obj\Debug\net5.0\Razor\Views\Account\AccessDenied.cshtml.g.cs

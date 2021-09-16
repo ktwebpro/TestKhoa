@@ -13,6 +13,7 @@ namespace TestKhoaExample.IRepository
         Task<List<Role>> LoadListRoles();
         Task<List<AccountModel>> LoadListUser();
         string GetUserName();
-        bool IsSigIn(); string GetRoleName();
+        bool IsSigIn(); 
+        string GetRoleName();
     }
 }
