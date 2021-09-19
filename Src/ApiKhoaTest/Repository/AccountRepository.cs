@@ -19,15 +19,12 @@ namespace ApiKhoaTest.Repository
     public class AccountRepository: IAccountRepository, IDisposable
     {
         private readonly ConnectDbContext context;
-        private readonly IHttpContextAccessor httpContext;
         private bool disposedValue;
 
         public AccountRepository(
-            ConnectDbContext _context,
-            IHttpContextAccessor _httpContext
+            ConnectDbContext _context
             )
         {
-            httpContext = _httpContext;
             context = _context;
         }
         public async Task<List<AccountModel>> LoadListAll()
@@ -41,7 +38,7 @@ namespace ApiKhoaTest.Repository
                                       {
                                           Address = p.Address,
                                           Avatar = !string.IsNullOrEmpty(p.Avatar)
-                                          ? httpContext.HttpContext.Request.Scheme + "://" + httpContext.HttpContext.Request.Host + "/images/" + p.Avatar
+                                          ? "/images/" + p.Avatar
                                           : "",
                                           Email = p.Email,
                                           FullName = p.FullName,

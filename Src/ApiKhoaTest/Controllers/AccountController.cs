@@ -120,7 +120,7 @@ namespace ApiKhoaTest.Controllers
             }
             catch
             {
-                return Ok("Có lỗi xảy ra!");
+                return Ok("Err: Có lỗi xảy ra!");
                 throw;
             }
         }

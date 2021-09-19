@@ -1,8 +1,11 @@
-﻿@{
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration configuration;
+@{
     ViewData["Title"] = "Danh sách thành viên";
-    var listUser = (List<TestKhoaExample.CustomModels.AccountModel>)ViewBag.ListUser;
-    var listRole = (List<TestKhoaExample.Models.Role>)ViewBag.ListRoles;
-    var userCode = ViewBag.UserCode;
+    List<TestKhoaExample.CustomModels.AccountModel> listUser = ViewBag.ListUser;
+    List<TestKhoaExample.Models.Role> listRole = ViewBag.ListRoles;
+    string userCode = ViewBag.UserCode;
+    string linkAPI = configuration.GetSection("LINK_API") != null ? configuration.GetSection("LINK_API").Value : "";
 }
 <div class="row">
     <div class="col-lg-6">
@@ -33,6 +36,7 @@
     <tbody>
         @foreach (var mThanhVien in listUser)
         {
+            string avatar = !string.IsNullOrEmpty(mThanhVien.Avatar) ? linkAPI + "/" + mThanhVien.Avatar : "";
             <tr>
                 <td style="width:80px;">
                     @if (userCode != mThanhVien.UserCode)
@@ -46,7 +50,7 @@
                         <a href="#" style="display:inline"
                            data-id="@mThanhVien.AccountId" data-role="@mThanhVien.Role" data-username="@mThanhVien.UserName" data-address="@mThanhVien.Address"
                            data-email="@mThanhVien.Email" data-fullname="@mThanhVien.FullName" data-phone="@mThanhVien.Phone"
-                           data-gender="@mThanhVien.Gender" data-status="@mThanhVien.Status" data-avatar="@mThanhVien.Avatar"
+                           data-gender="@mThanhVien.Gender" data-status="@mThanhVien.Status" data-avatar="@avatar"
                            data-toggle="modal" data-target="#modal_form_horizontal" class="btn btn-sm cmdEditUser">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
@@ -63,9 +67,9 @@
                 <td>@mThanhVien.GenderName</td>
                 <td>@mThanhVien.StatusName</td>
                 <td>
-                    @if (!string.IsNullOrEmpty(mThanhVien.Avatar))
+                    @if (!string.IsNullOrEmpty(avatar))
                     { 
-                        <img src="@mThanhVien.Avatar" style="max-width:50px;" />
+                        <img src="@avatar" style="max-width:50px;" />
                     }
                 </td>
                 <td>@mThanhVien.Role</td>
