@@ -3,7 +3,6 @@
     var listUser = (List<TestKhoaExample.CustomModels.AccountModel>)ViewBag.ListUser;
     var listRole = (List<TestKhoaExample.Models.Role>)ViewBag.ListRoles;
     var userCode = ViewBag.UserCode;
-    var currentRole = ViewBag.CurrentRole;
 }
 <div class="row">
     <div class="col-lg-6">
@@ -298,8 +297,13 @@
                 contentType: false,
                 processData: false,
                 success: function (response) {
+
                     if (response != 401) {
-                        document.location.reload();
+                        if (response > 0) {
+                            document.location.reload();
+                        } else {
+                            alert('Có lỗi xảy ra.');
+                        }
                     } else {
                         alert('Bạn không có quyền truy cập');
 

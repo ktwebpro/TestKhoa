@@ -13,7 +13,7 @@ namespace ApiKhoaTest.IRepository
     {
         //int GetUserIdFromToken(string strToken);
         //string GetRoleNameFromToken(string strToken);
-        string GenerateToken(AccountModel _account);
+        string GenerateToken(AccountModel account);
         //JwtSecurityToken GetInfo(string strToken);
     }
 }

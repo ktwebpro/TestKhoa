@@ -11,8 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TestKhoaExample.IRepository;
-using TestKhoaExample.Repository;
 
 namespace TestKhoaExample
 {
@@ -36,16 +34,13 @@ namespace TestKhoaExample
                             // Cookie settings
                             options.Cookie.Name = "User";
                             options.Cookie.HttpOnly = false;
-                            options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+                            options.ExpireTimeSpan = TimeSpan.FromDays(1);
 
                             options.LoginPath = "/Account/Login";
                             options.AccessDeniedPath = "/Account/AccessDenied";
                             options.SlidingExpiration = true;
                         }
                 );
-
-            services.AddScoped<IAccountRepository, AccountRepository>();
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,8 +48,7 @@ namespace TestKhoaExample
         {
             if (env.IsDevelopment())
             {
-                //app.UseDeveloperExceptionPage();
-                app.UseExceptionHandler("/Home/Error");
+                app.UseDeveloperExceptionPage();
             }
             else
             {

@@ -15,7 +15,7 @@ namespace ApiKhoaTest.Models
         [DisplayName ("Tên đăng nhập")]
         [MaxLength(50)]
         public string UserName { get; set; }
-        [MaxLength(10)]
+        [MaxLength(36)]
         public string UserCode { get; set; }
         [Required]
         [DisplayName("Mật khẩu")]

@@ -64,29 +64,29 @@ namespace ApiKhoaTest.Repository
 
         //    return _result;
         //}
-        public string GenerateToken(AccountModel _account)
+        public string GenerateToken(AccountModel account)
         {
             string key = "my_secret_key_12345"; //Secret key which will be used later during validation    
-            var issuer = "http://localhost";  //normally this will be your site URL    
+            string issuer = "http://localhost";  //normally this will be your site URL    
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            SymmetricSecurityKey securityKey = new (Encoding.UTF8.GetBytes(key));
+            SigningCredentials credentials = new (securityKey, SecurityAlgorithms.HmacSha256);
 
             //Create a List of Claims, Keep claims name short    
-            var permClaims = new List<Claim>();
+            List<Claim> permClaims = new();
             permClaims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             permClaims.Add(new Claim("valid", "1"));
-            permClaims.Add(new Claim("userid", _account.AccountId.ToString()));
-            permClaims.Add(new Claim("name", _account.UserName));
-            permClaims.Add(new Claim("role", _account.Role));
+            permClaims.Add(new Claim("userid", account.AccountId.ToString()));
+            permClaims.Add(new Claim("name", account.UserName));
+            permClaims.Add(new Claim("role", account.Role));
 
             //Create Security Token object by giving required parameters    
-            var token = new JwtSecurityToken(issuer, //Issure    
+            JwtSecurityToken token = new (issuer, //Issure    
                             issuer,  //Audience    
                             permClaims,
                             expires: DateTime.Now.AddMinutes(5),
                             signingCredentials: credentials);
-            var jwt_token = new JwtSecurityTokenHandler().WriteToken(token);
+            string jwt_token = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt_token;
         }
     }

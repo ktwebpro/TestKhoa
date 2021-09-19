@@ -14,9 +14,8 @@ namespace ApiKhoaTest.IRepository
         Task<IndexViewModel> GetDetailAsync(string strUserCode);
         Task<bool> CheckInfoAsync(string strUserCode, string strPassword);
         Task<string> ChangePasswordAsync(string strUserCode, string strNewPassword);
-        Task<string> GetUserRoleAsync(string strUserCode);
         Task<AccountModel> SignInAsync(LoginViewModel req);
         Task<List<AccountModel>> LoadListAll();
-        Task<int> SaveAsync(AccountModel user, int iIdRole);
+        Task<int> SaveAsync(SaveViewModel model);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ApiKhoaTest.CustomModels;
 using ApiKhoaTest.IRepository;
+using ApiKhoaTest.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -23,9 +24,13 @@ namespace ApiKhoaTest.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        #region Fields
         private readonly IAccountRepository accountRepository;
         private readonly ITokenRepository tokenRepository;
         private readonly IWebHostEnvironment environment;
+        #endregion
+
+        #region Constructor
         public AccountController(
             IAccountRepository _accountRepository,
             ITokenRepository _tokenRepository,
@@ -36,6 +41,8 @@ namespace ApiKhoaTest.Controllers
             tokenRepository = _tokenRepository;
             accountRepository = _accountRepository;
         }
+        #endregion
+
         /// <summary>
         /// asd
         /// </summary>
@@ -44,20 +51,35 @@ namespace ApiKhoaTest.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
-            var listRole = await accountRepository.GetListRoleAsync();
-            return Ok(listRole);
+            try
+            {
+                return Ok(await accountRepository.GetListRoleAsync());
+            }
+            catch
+            {
+                return Ok(new List<Role>());
+                throw;
+            }
         }
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromForm] LoginViewModel model)
         {
-            var result = await accountRepository.SignInAsync(model);
-            if (string.IsNullOrEmpty(result.ErrorCode))
+            try
             {
-                result.Token = tokenRepository.GenerateToken(result);
-            }
+                AccountModel result = await accountRepository.SignInAsync(model);
+                if (string.IsNullOrEmpty(result.ErrorCode))
+                {
+                    result.Token = tokenRepository.GenerateToken(result);
+                }
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch
+            {
+                return Ok(new AccountModel { ErrorCode = "Có lỗi xảy ra!" });
+                throw;
+            }
         }
         [HttpGet]
         [Authorize]
@@ -65,12 +87,11 @@ namespace ApiKhoaTest.Controllers
         {
             try
             {
-                var userList = await accountRepository.LoadListAll();
-                return Ok(userList);
+                return Ok(await accountRepository.LoadListAll());
             }
             catch (Exception ex)
             {
-                return Ok("err:" + ex.Message.ToString());
+                return Ok("Err:" + ex.Message.ToString());
                 throw;
             }
 
@@ -79,94 +100,95 @@ namespace ApiKhoaTest.Controllers
         [Authorize]
         public async Task<IActionResult> GetDetailUser(string strUser)
         {
-            return Ok(await accountRepository.GetDetailAsync(strUser));
+            try
+            {
+                return Ok(await accountRepository.GetDetailAsync(strUser));
+            }
+            catch
+            {
+                return Ok(new IndexViewModel());
+                throw;
+            }
         }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Remove([FromForm] int iUserId)
         {
-            return Ok(await accountRepository.RemoveAsync(iUserId));
+            try
+            {
+                return Ok(await accountRepository.RemoveAsync(iUserId));
+            }
+            catch
+            {
+                return Ok("Có lỗi xảy ra!");
+                throw;
+            }
         }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordViewModel model)
         {
-            var userCode = Request.Form["strUser"];
+            try
+            {
+                var userCode = Request.Form["strUser"];
 
-            var checkInfo = await accountRepository.CheckInfoAsync(userCode, model.OldPassword);
-            if (checkInfo)
-            {
-                return Ok(await accountRepository.ChangePasswordAsync(userCode, model.NewPassword));
+                bool checkInfo = await accountRepository.CheckInfoAsync(userCode, model.OldPassword);
+                if (checkInfo)
+                {
+                    return Ok(await accountRepository.ChangePasswordAsync(userCode, model.NewPassword));
+                }
+                else
+                {
+                    return Ok("Err: Mật khẩu cũ nhập không đúng.");
+                }
             }
-            else
+            catch
             {
-                return Ok("Err: Mật khẩu cũ nhập không đúng.");
+                return Ok("Err: Có lỗi xảy ra.");
+                throw;
             }
         }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Save([FromForm] SaveViewModel model)
         {
-            var user = new AccountModel();
-            
-            var upAvatar = Request.Form["ByteImage"];
-
-            if (!string.IsNullOrEmpty(upAvatar))
+            try
             {
-                var imageAvatar = LoadBase64(upAvatar);
-                string fileName = DateTime.Now.Millisecond.ToString() + ".jpg";
-                model.Avatar = fileName;
+                var upAvatar = Request.Form["ByteImage"];
 
-                string RootPath = environment.WebRootPath;
-                string uploadsFolder = Path.Combine(RootPath, "images/");
-
-                #region Upload hình avatar
-                //UpHinhPC
-
-                if (!string.IsNullOrEmpty(fileName))
+                if (!string.IsNullOrEmpty(upAvatar))
                 {
-                    string pathfile = Path.Combine(uploadsFolder, fileName);
+                    Image imageAvatar = LoadBase64(upAvatar);
+                    string fileName = DateTime.Now.Millisecond.ToString() + ".jpg";
+                    model.Avatar = fileName;
 
-                    if (!Directory.Exists(uploadsFolder))
+                    string RootPath = environment.WebRootPath;
+                    string uploadsFolder = Path.Combine(RootPath, "images/");
+
+                    #region Upload hình avatar
+                    //UpHinhPC
+
+                    if (!string.IsNullOrEmpty(fileName))
                     {
-                        Directory.CreateDirectory(uploadsFolder);
+                        string pathfile = Path.Combine(uploadsFolder, fileName);
+
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+
+                        imageAvatar.Save(pathfile);
                     }
-
-                    imageAvatar.Save(pathfile);
+                    #endregion
                 }
-                #endregion
-            }
 
-            if (model.Type == "Create")
-            {
-                user.AccountId = model.Id;
-                user.FullName = model.FullName;
-                user.UserName = model.UserName;
-                user.Email = model.Email;
-                user.Address = model.Address;
-                user.Phone = model.Phone;
-                user.Gender = (byte)model.Gender;
-                user.Status = (sbyte)model.Status;
-                user.Avatar = model.Avatar;
-                user.Password = model.Password;
+                return Ok(await accountRepository.SaveAsync(model));
             }
-            else if (model.Type == "Edit")
+            catch
             {
-                user = (await accountRepository.LoadListAll()).FirstOrDefault(p => p.AccountId == model.Id);
-
-                user.FullName = model.FullName;
-                user.UserName = model.Email;
-                user.Email = model.Email;
-                user.Address = model.Address;
-                user.Phone = model.Phone;
-                user.Gender = (byte)model.Gender;
-                user.Status = (sbyte)model.Status;
-                if (!string.IsNullOrEmpty(model.Avatar))
-                {
-                    user.Avatar = model.Avatar;
-                }
+                return Ok(0);
+                throw;
             }
-            return Ok(await accountRepository.SaveAsync(user, model.RoleId));
         }
         //private async Task<string> GetToken()
         //{
